@@ -5,6 +5,8 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 #importing the required libraries for data manipulation, visualization, and fetching financial data.
 
+COMMON_TICKERS = ["AAPL", "MSFT", "SPY"]
+
 
 #------section 1
 # DATA FUNCTIONS
@@ -12,9 +14,32 @@ import matplotlib.pyplot as plt
 # they just fetch numbers and hand back a DataFrame/dict.
 #-------
 
+#this is so that the user knows what ticker they are entering
+@st.cache_data(ttl=60 * 60 * 24, show_spinner=False)  # refresh daily
+def load_all_tickers():
+    try:
+        nasdaq = pd.read_csv(
+            "http://ftp.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt",
+            sep="|",
+            on_bad_lines="skip",
+        )
+        other = pd.read_csv(
+            "http://ftp.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt",
+            sep="|",
+            on_bad_lines="skip",
+        )
+        nasdaq_symbols = nasdaq.loc[nasdaq["Test Issue"] == "N", "Symbol"]
+        other_symbols = other.loc[other["Test Issue"] == "N", "ACT Symbol"]
+        all_symbols = pd.concat([nasdaq_symbols, other_symbols]).dropna().unique()
+        return sorted(str(s).strip() for s in all_symbols if str(s).strip())
+    except Exception:
+        # fallback if the feed is unreachable — better than a broken dropdown
+        return COMMON_TICKERS
+
 # price history fetching for the currnt date and downloading history of stock
 # droping/removing all the empty rows and coloums of data for a eaiser analysis
 # also making sure to raise an error if data is empty
+@st.cache_data(ttl=300, show_spinner=False)
 def fetch_price_history(tickers, period):
     data = yf.download(tickers, period=period, auto_adjust=True)["Close"]
     if isinstance(data, pd.Series):
@@ -28,6 +53,7 @@ def fetch_price_history(tickers, period):
     return data
 
 # getting current price of the stock and raising error if invalid input such as 0 or infinite or other values
+@st.cache_data(ttl=60, show_spinner=False)
 def get_current_prices(tickers):
     prices = {}
     for ticker in tickers:
@@ -245,6 +271,18 @@ def build_dashboard_figure(
 # -------
 
 st.set_page_config(page_title="Portfolio Manager", layout="wide")
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 st.title("Portfolio Manager")
 st.write(
     "Enter what you own below, then click **Run Analysis**. "
@@ -308,8 +346,16 @@ else:  # Type it in manually option
 
     holdings_input = st.data_editor(
         default_data,
-        num_rows="dynamic",       # lets the user add/remove rows themselves
+        num_rows="dynamic",
         use_container_width=True,
+        column_config={
+            "Ticker": st.column_config.SelectboxColumn(
+                "Ticker",
+                options=load_all_tickers(),
+                help="Start typing to search — thousands of US-listed tickers.",
+                required=True,
+            ),
+        },
     )
 
 col_a, col_b = st.columns(2)
