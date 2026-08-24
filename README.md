@@ -1,2 +1,2 @@
-# portfolio_maneger_byrak
+# portfolio_manager_byrak
 portfolio manager my second project 
