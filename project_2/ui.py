@@ -4,7 +4,7 @@ import streamlit as st
 
 from calculations import build_holdings_table, calculate_performance_metrics
 from charts import build_dashboard_figure
-from data import fetch_price_history, get_current_prices, load_all_tickers
+from data import fetch_price_history, get_current_prices, load_all_tickers, search_ticker
 
 REQUIRED_COLUMNS = ["Ticker", "Shares Owned", "Price Paid ($)", "Weight (%)"]
 
@@ -42,6 +42,26 @@ def read_holdings_input():
         return holdings_input
 
     st.caption("Add a row per asset. Weight (%) is just for your own reference.")
+    with st.form("ticker_search_form"):
+        ticker_input = st.text_input(
+            "Search for a company or ticker",
+            value=st.session_state.get("ticker_query", ""),
+            placeholder="Try a company name, such as Apple",
+        )
+        search_submitted = st.form_submit_button("Search")
+    if search_submitted:
+        st.session_state["ticker_query"] = ticker_input
+    ticker_query = st.session_state.get("ticker_query", "")
+    if ticker_query.strip():
+        try:
+            ticker_matches = search_ticker(ticker_query)
+        except Exception as exc:
+            st.warning(f"Couldn't search Yahoo Finance: {exc}")
+        else:
+            if ticker_matches:
+                st.dataframe(ticker_matches, use_container_width=True, hide_index=True)
+            else:
+                st.info("No matching securities were found.")
     return st.data_editor(
         pd.DataFrame(columns=REQUIRED_COLUMNS),
         num_rows="dynamic",
