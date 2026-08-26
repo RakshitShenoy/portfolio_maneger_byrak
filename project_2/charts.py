@@ -10,7 +10,7 @@ def build_dashboard_figure(
 ):
     figure, axes = plt.subplots(2, 2, figsize=(14, 9))
     allocation = holdings_df.set_index("Ticker")["Current Weight (%)"]
-    profit_loss = holdings_df.set_index("Ticker")["Profit/Loss ($)"]
+    profit_loss = holdings_df.set_index("Ticker")["Profit/Loss (Rs)"]
 
     axes[0, 0].pie(
         allocation,
@@ -24,7 +24,7 @@ def build_dashboard_figure(
     bar_colors = ["green" if value >= 0 else "red" for value in profit_loss]
     axes[0, 1].bar(profit_loss.index, profit_loss.values, color=bar_colors)
     axes[0, 1].axhline(0, color="black", linewidth=0.8)
-    axes[0, 1].set(title="Profit/Loss by Holding", ylabel="Profit/Loss ($)")
+    axes[0, 1].set(title="Profit/Loss by Holding", ylabel="Profit/Loss (Rs)")
     axes[0, 1].tick_params(axis="x", rotation=45)
 
     correlation_matrix = price_history[tickers].pct_change().dropna().corr()

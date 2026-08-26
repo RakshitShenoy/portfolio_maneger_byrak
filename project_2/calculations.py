@@ -6,11 +6,11 @@ def build_holdings_table(holdings_input, current_prices):
     rows = []
     for _, row in holdings_input.iterrows():
         ticker, shares = row["Ticker"], float(row["Shares Owned"])
-        cost_basis, price_now = float(row["Price Paid ($)"]), current_prices[ticker]
+        cost_basis, price_now = float(row["Price Paid (Rs)"]), current_prices[ticker]
         if not np.isfinite(shares) or shares <= 0:
             raise ValueError(f"Shares Owned for {ticker} must be greater than zero.")
         if not np.isfinite(cost_basis) or cost_basis < 0:
-            raise ValueError(f"Price Paid ($) for {ticker} must be zero or greater.")
+            raise ValueError(f"Price Paid (Rs) for {ticker} must be zero or greater.")
         market_value = shares * price_now
         cost_total = shares * cost_basis
         profit_loss = market_value - cost_total
@@ -21,7 +21,7 @@ def build_holdings_table(holdings_input, current_prices):
             "Current Price": round(price_now, 2),
             "Market Value": round(market_value, 2),
             "Cost Basis Total": round(cost_total, 2),
-            "Profit/Loss ($)": round(profit_loss, 2),
+            "Profit/Loss (Rs)": round(profit_loss, 2),
             "Profit/Loss (%)": round(profit_loss / cost_total * 100, 2) if cost_total else 0.0,
             "Weight Entered (%)": row["Weight (%)"],
         })

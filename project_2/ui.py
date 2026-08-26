@@ -6,7 +6,7 @@ from calculations import build_holdings_table, calculate_performance_metrics
 from charts import build_dashboard_figure
 from data import fetch_price_history, get_current_prices, load_all_tickers, search_ticker
 
-REQUIRED_COLUMNS = ["Ticker", "Shares Owned", "Price Paid ($)", "Weight (%)"]
+REQUIRED_COLUMNS = ["Ticker", "Shares Owned", "Price Paid (Rs)", "Weight (%)"]
 
 
 def read_holdings_input():
@@ -20,7 +20,7 @@ def read_holdings_input():
         template_csv = pd.DataFrame({
             "Ticker": ["AAPL", "MSFT", "SPY"],
             "Shares Owned": [10.0, 5.0, 8.0],
-            "Price Paid ($)": [150.0, 280.0, 400.0],
+            "Price Paid (Rs)": [150.0, 280.0, 400.0],
             "Weight (%)": [40, 35, 25],
         }).to_csv(index=False)
         st.download_button("Download CSV template", template_csv, file_name="portfolio_template.csv")
@@ -94,10 +94,10 @@ def run_analysis(holdings_input, benchmark_ticker, history_period):
     if holdings_input["Ticker"].duplicated().any():
         st.error("Each ticker may appear only once. Combine duplicate positions before running the analysis.")
         st.stop()
-    for column in ["Shares Owned", "Price Paid ($)", "Weight (%)"]:
+    for column in ["Shares Owned", "Price Paid (Rs)", "Weight (%)"]:
         holdings_input[column] = pd.to_numeric(holdings_input[column], errors="coerce")
-    if holdings_input[["Shares Owned", "Price Paid ($)", "Weight (%)"]].isna().any().any():
-        st.error("Shares Owned, Price Paid ($), and Weight (%) must contain valid numbers.")
+    if holdings_input[["Shares Owned", "Price Paid (Rs)", "Weight (%)"]].isna().any().any():
+        st.error("Shares Owned, Price Paid (Rs), and Weight (%) must contain valid numbers.")
         st.stop()
 
     with st.spinner("Fetching prices..."):
@@ -117,12 +117,12 @@ def run_analysis(holdings_input, benchmark_ticker, history_period):
         st.stop()
     st.dataframe(holdings_df, use_container_width=True, hide_index=True)
     total_cost = holdings_df["Cost Basis Total"].sum()
-    total_pl = holdings_df["Profit/Loss ($)"].sum()
+    total_pl = holdings_df["Profit/Loss (Rs)"].sum()
     total_pl_pct = total_pl / total_cost * 100 if total_cost else 0
     m1, m2, m3 = st.columns(3)
-    m1.metric("Total Portfolio Value", f"${total_value:,.2f}")
-    m2.metric("Total Profit/Loss", f"${total_pl:,.2f}", f"{total_pl_pct:.2f}%")
-    m3.metric("Total Cost Basis", f"${total_cost:,.2f}")
+    m1.metric("Total Portfolio Value", f"Rs {total_value:,.2f}")
+    m2.metric("Total Profit/Loss", f"Rs {total_pl:,.2f}", f"{total_pl_pct:.2f}%")
+    m3.metric("Total Cost Basis", f"Rs {total_cost:,.2f}")
 
     st.subheader("3. Performance Metrics")
     _, cumulative_return, metrics = calculate_performance_metrics(price_history[tickers], holdings_df)
