@@ -4,7 +4,7 @@ import streamlit as st
 
 from calculations import build_holdings_table, calculate_performance_metrics
 from charts import build_dashboard_figure
-from data import fetch_price_history, get_current_prices, load_all_tickers, search_ticker
+from data import fetch_price_history, get_current_prices, search_ticker
 
 REQUIRED_COLUMNS = ["Ticker", "Shares Owned", "Price Paid (Rs)", "Weight (%)"]
 
@@ -42,7 +42,10 @@ def read_holdings_input():
         return holdings_input
 
     st.subheader("Enter your holdings")
-    st.caption("Add a row per asset. Weight (%) is just for your own reference.")
+    st.caption(
+        "Add a row per asset. Enter the exact Yahoo Finance symbol, such as AAPL or TCS.NS. "
+        "Weight (%) is just for your own reference."
+    )
     with st.expander("Find a ticker by company name (optional)"):
         with st.form("ticker_search_form"):
             ticker_input = st.text_input(
@@ -70,10 +73,12 @@ def read_holdings_input():
         key="holdings_editor",
         use_container_width=True,
         column_config={
-            "Ticker": st.column_config.SelectboxColumn(
+            "Ticker": st.column_config.TextColumn(
                 "Ticker",
-                options=load_all_tickers(),
-                help="Start typing to search - thousands of US-listed tickers.",
+                help=(
+                    "Enter the exact Yahoo Finance symbol, such as AAPL, MSFT, or TCS.NS. "
+                    "Use the search above to find a symbol."
+                ),
                 required=True,
             ),
         },
@@ -106,7 +111,11 @@ def run_analysis(holdings_input, benchmark_ticker, history_period):
             price_history = fetch_price_history(all_tickers, history_period)
             current_prices = get_current_prices(tickers)
         except Exception as exc:
-            st.error(f"Couldn't fetch market data: {exc}")
+            st.error(
+                f"Couldn't fetch market data: {exc} "
+                "Use the exact Yahoo Finance ticker from the search results. "
+                "Indian listings commonly need .NS or .BO, such as TCS.NS."
+            )
             st.stop()
 
     st.subheader("2. Profit / Loss")
